@@ -1,6 +1,5 @@
 from Bucket import Bucket
 from math import ceil, log
-import random
 
 
 class Node:
@@ -16,6 +15,7 @@ class Node:
         self.has_bucket = False  # if the node is a leaf then this attribute is True
         self.bucket = None
         self.actual_doubly_black = False # this is for debug only
+        self.bh=0
 
 class Tree:
     def __init__(self):
@@ -65,9 +65,9 @@ class Tree:
                 else:
                     temp_node = temp_node.left
             bucket = temp_node.bucket
-            # print("P0")
+
             bucket.insert_item(key, value)
-            # print("P1")
+
             self.fixup(bucket)
             self.fixup(bucket)
 
@@ -76,8 +76,6 @@ class Tree:
             if bucket.count > (ceil(2 * self.H)) - 10 and bucket.count > 20:
                 self.split(temp_node)
 
-        # print("global_bucket.fixin pointer from insert is : ",self.global_bucket.fixing_pointer==self.nil)
-        # print("P2")
         self.post_operation()
         self.update_H()
 
@@ -91,7 +89,6 @@ class Tree:
             else:
                 temp_node = temp_node.left
         bucket = temp_node.bucket
-
         bucket.delete_item(key)
         self.fixup(bucket)
         self.fixup(bucket)
@@ -132,7 +129,6 @@ class Tree:
         new_right_bucket.parent_node = right_leaf
         new_node.right = right_leaf
 
-
         self.fixup(left_leaf.bucket)  # as in paper we call fixup for one of the buckets to eliminate consequtive reds above any bucket
         self.fixup(left_leaf.bucket)
         if bucket == self.global_bucket:
@@ -140,15 +136,11 @@ class Tree:
         if bucket == self.leftmost_bucket:
             self.leftmost_bucket = new_left_bucket
 
-
     def merge_or_borrow(self, temp_node):
-
-      
 
         bucket = temp_node.bucket
         self.finish_remaining_fixups(bucket)
         other_bucket = self.prepare_for_merge(temp_node)
-       
         if other_bucket.count > (ceil(0.5 * self.H)) + 3:
             new_key, new_value = bucket.borrow(other_bucket)
             temp_node.parent.key = new_key
@@ -157,7 +149,6 @@ class Tree:
             self.fixup(other_bucket)
         elif temp_node.parent != self.root:
             self.finish_remaining_fixups(other_bucket)
-          
             # create a new leaf that will point to the new merged bucket
             self.count -= 1
             new_leaf = Node(-1, -1)
@@ -171,16 +162,13 @@ class Tree:
                 temp_node.parent.parent.left = new_leaf
             elif temp_node.parent == temp_node.parent.parent.right:
                 temp_node.parent.parent.right = new_leaf
-           
 
             if other_bucket == bucket.right_bucket:  # we merge the right bucket into the left one
                 new_merged_bucket = bucket.merge(other_bucket)
-                
             elif other_bucket == bucket.left_bucket:
-
                 new_merged_bucket = other_bucket.merge(bucket)
-              
-               
+                
+                
 
             new_merged_bucket.parent_node = new_leaf
             new_leaf.bucket = new_merged_bucket
@@ -195,21 +183,17 @@ class Tree:
 
 
     def fixup(self, bucket):
-        # print("global_bucket.fixin pointer from fixup is : ",self.global_bucket.fixing_pointer==self.nil)
         if bucket.fixing_pointer != self.root and bucket.fixing_pointer != self.nil:
             if bucket.fixing_pointer.is_red == True and bucket.fixing_pointer.parent.is_red == True:
                 self.double_red_fixup(bucket.fixing_pointer)
             if bucket.fixing_pointer.doubly_black == True:
                 self.doubly_black_fixup(bucket.fixing_pointer)
 
-        # advance the fixing pointer to its parent
         if bucket.fixing_pointer == self.root or bucket.fixing_pointer.parent == self.root or bucket.fixing_pointer == self.nil:
             bucket.fixing_pointer = self.nil
         else:
             bucket.fixing_pointer = bucket.fixing_pointer.parent
-        # bucket.print_bucket()
         bucket.post_operation()
-        # bucket.print_bucket()
         return
 
     def finish_remaining_fixups(self, bucket):  # this is proved in paper to be constant
@@ -226,9 +210,9 @@ class Tree:
                     leaf_node.parent.doubly_black=False
                     leaf_node.parent.right.doubly_balck=True
                 self.left_rotate(leaf_node.parent)
+
             sibling_bucket = leaf_node.parent.right.bucket
             
-               
         else:
             if leaf_node.parent.left.has_bucket == False:
                 leaf_node.parent.left.is_red=False
@@ -239,13 +223,11 @@ class Tree:
                 self.right_rotate(leaf_node.parent)
             sibling_bucket = leaf_node.parent.left.bucket
 
-  
+
 
         return sibling_bucket
 
     def left_rotate(self, node):
-
-
         if node != self.root:
             if node == node.parent.left:
                 node.parent.left = node.right
@@ -263,7 +245,7 @@ class Tree:
         return
 
     def right_rotate(self, node):
-        
+
         if node != self.root:
             if node == node.parent.left:
                 node.parent.left = node.left
@@ -282,7 +264,7 @@ class Tree:
         return
 
     def double_red_fixup(self, node):  # takes a red node that has a red parent and perform a fixup
-       
+        
         if node.parent is node.parent.parent.left:
             uncle = node.parent.parent.right
             if uncle.is_red == True:  # this is doubly red fixup case 1
@@ -323,13 +305,12 @@ class Tree:
                     node.parent.parent.doubly_black = False
                     node.parent.doubly_black = True
                 self.left_rotate(node.parent.parent)
-        
+
         self.root.is_red = False
 
 
 
     def doubly_black_fixup(self, node):
-
         if node == node.parent.left:
             s = node.parent.right
             if s.is_red == True:  # case 1
@@ -352,7 +333,6 @@ class Tree:
                 else:
                     node.parent.doubly_black = True
                 self.root.doubly_black = False
-
                 return
             if s.left.is_red == False and s.right.is_red == False:  # case2
                 s.is_red = True
@@ -362,17 +342,18 @@ class Tree:
                 else:
                     node.parent.doubly_black = True
                 self.root.doubly_black = False
-
                 return
             elif s.right.is_red == False:  # case 3
                 s.is_red = True
                 s.left.is_red = False
                 self.right_rotate(s)
+            s = node.parent.right
             if s.right.is_red == True:  # case 4
                 s.is_red = node.parent.is_red
                 node.parent.is_red = False
                 s.right.is_red = False
                 self.left_rotate(node.parent)
+                node.doubly_black=False
 
         else:
             s = node.parent.left
@@ -396,7 +377,6 @@ class Tree:
                 else:
                     node.parent.doubly_black = True
                 self.root.doubly_black = False
-
                 return
             if s.left.is_red == False and s.right.is_red == False:  # case2
                 s.is_red = True
@@ -406,33 +386,29 @@ class Tree:
                 else:
                     node.parent.doubly_black = True
                 self.root.doubly_black = False
-
                 return
             elif s.left.is_red == False:  # case 3
                 s.is_red = True
                 s.right.is_red = False
                 self.left_rotate(s)
+            s = node.parent.left
             if s.left.is_red == True:  # case 4
                 s.is_red = node.parent.is_red
                 node.doubly_black = False
                 node.parent.is_red = False
                 s.left.is_red = False
                 self.right_rotate(node.parent)
-        self.root.doubly_black = False
+                node.doubly_black=False
 
 
 
     def post_operation(self):
-        
-        # print("global_bucket.fixin pointer from post_operation is : ",self.global_bucket.fixing_pointer==self.nil)
         bucket = self.global_bucket
         parent_node = bucket.parent_node
         if bucket.count > (ceil(2 * self.H)) - 10 and bucket.count > 20:
             self.split(parent_node)
         elif bucket.count < (ceil(0.5 * self.H)) + 3:
-            #print('start global merge')
             self.merge_or_borrow(parent_node)
-            #print('end global merge')
         else:
             for i in range(11):
                 self.fixup(bucket)
@@ -440,8 +416,6 @@ class Tree:
                 self.global_bucket = self.leftmost_bucket
             else:
                 self.global_bucket = bucket.right_bucket
-
-
 
         return
 
@@ -456,11 +430,4 @@ class Tree:
             self.H = ceil(4.32 * log(self.count, 2))
         return
 
-    def dfs(self, node):
-        if node.has_bucket is True:
-            self.bucket_list.append(node.bucket)
-        else:
-            self.dfs(node.left)
-            self.dfs(node.right)
-
-    
+   
