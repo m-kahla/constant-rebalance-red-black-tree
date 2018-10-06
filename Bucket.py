@@ -55,7 +55,7 @@ class Bucket():
                         temp_item.parent.child = new_item
                         new_item.parent = temp_item.parent
                     else:
-                        self.start=new_item	
+                        self.start=new_item
                     new_item.child = temp_item
                     temp_item.parent = new_item
                     if key >= self.middle.key:
@@ -65,7 +65,6 @@ class Bucket():
                     break
         self.count += 1
 
-    # post_operation() better for it to be with the fixup procedure
 
 
 
@@ -78,7 +77,6 @@ class Bucket():
                 if temp_item.child != None:
                     temp_item.child.parent = temp_item.parent
                 self.count -= 1
-                # post_operation() better for it to be with the fixup procedure
                 if self.count == 0:
                     self.start = None
                     return
@@ -101,7 +99,7 @@ class Bucket():
                 if temp_item == self.inside_fixing_pointer:
                     if self.count > 0 and self.inside_fixing_pointer.child != None:
                         self.inside_fixing_pointer = self.inside_fixing_pointer.child
-                    elif self.count > 0 and self.self.inside_fixing_pointer.parent != None:
+                    elif self.count > 0 and self.inside_fixing_pointer.parent != None:
                         self.inside_fixing_pointer = self.inside_fixing_pointer.parent
                     else:  # this means count is 0
                         self.inside_fixing_pointer = None
@@ -113,7 +111,6 @@ class Bucket():
                     temp_item = temp_item.child
 
     def split(self):  # dont forget to check if global pointer points to split or merged bucket
-
         self.outdated = True
         self.finish_post_operations()
         new_left = Bucket(self.left_bucket, None, None)
@@ -142,6 +139,7 @@ class Bucket():
         new_right.smaller_count = 0
         new_right.larger_count = new_right.count - 1
         new_right.inside_fixing_pointer = new_right.start
+
 
         return new_left, new_right, self.middle.key, self.middle.value
 
@@ -233,15 +231,13 @@ class Bucket():
             key = self.start.key
             value = self.start.value
 
-
+        
         other_bucket.count -= 1
         self.count += 1
- 
 
         return key, value
 
     def post_operation(self):
-
         if self.smaller_count - self.larger_count >= 2:
             self.middle = self.middle.parent
             self.larger_count += 1
@@ -254,10 +250,7 @@ class Bucket():
             self.inside_fixing_pointer.current_bucket = self
             self.inside_fixing_pointer = self.inside_fixing_pointer.child
 
-
-    def finish_post_operations(
-            self):  # it is proved that this will be constant once the bucket is ready to be split or merged
-
+    def finish_post_operations(self):  # it is proved that this will be constant once the bucket is ready to be split or merged
         while abs(self.smaller_count - self.larger_count) > 1:
             if self.smaller_count > self.larger_count:
                 self.middle = self.middle.parent
@@ -270,6 +263,3 @@ class Bucket():
         while self.inside_fixing_pointer != None:
             self.inside_fixing_pointer.current_bucket = self
             self.inside_fixing_pointer = self.inside_fixing_pointer.child
-
-
-   
